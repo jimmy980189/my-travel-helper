@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sapporo Helper - Full Name Edition</title>
+    <title>Sapporo Helper - Unified UI Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --card: #ffffff; --danger: #ff7675; --text-main: #2d3436; --text-sub: #636e72; }
@@ -15,7 +15,27 @@
         .card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .info-header { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         
-        /* --- 資訊頁樣式 --- */
+        /* --- 通用項目樣式 --- */
+        .item { display: flex; align-items: flex-start; background: #fff; padding: 12px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 10px; gap: 12px; min-height: 80px; position: relative; flex-direction: column; }
+        .view-mode .item { border: none; border-bottom: 1px solid #f0f0f0; border-radius: 0; padding: 15px 0; margin-bottom: 0; }
+        .view-mode .item:last-child { border-bottom: none; }
+        .item-row { display: flex; width: 100%; align-items: center; gap: 12px; }
+        .handle { color: #ccc; cursor: grab; display: none; padding-right: 5px; font-size: 20px; }
+        .edit-mode .handle { display: block; }
+        .item-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .item-content b { font-size: 1.1em; }
+        .tag { font-size: 0.7em; padding: 2px 8px; border-radius: 4px; margin-left: 6px; color: white; font-weight: bold; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+        .sub-list { margin-top: 5px; width: 100%; padding-left: 15px; box-sizing: border-box; }
+        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px dashed #eee; }
+        .sub-item-name { font-size: 0.9em; color: #555; display: flex; align-items: center; }
+        .sub-item-name::before { content: "•"; color: var(--accent); margin-right: 8px; font-weight: bold; }
+        .map-link-btn { font-size: 0.75em; color: var(--accent); text-decoration: none; border: 1px solid #dff0ff; padding: 2px 6px; border-radius: 4px; background: #f0f8ff; }
+        .add-zone { display: none; margin-top: 15px; gap: 8px; width: 100%; flex-wrap: wrap; }
+        .edit-mode .add-zone { display: flex; }
+        .add-zone input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; min-width: 120px; }
+        .add-zone button { padding: 10px 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* --- 基礎 UI (保持不動) --- */
         .flight-ticket { background: linear-gradient(135deg, #2980b9, #3498db); color: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
         .flight-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .flight-city { font-size: 1.3em; font-weight: bold; }
@@ -23,34 +43,10 @@
         .station-box { background: #fff5f5; border-radius: 10px; padding: 12px; margin-top: 15px; border: 1px solid #ffe3e3; }
         .station-item { font-size: 0.85em; color: #c0392b; line-height: 1.8; margin-bottom: 2px; }
         .airport-box { background: #ebf5ff; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--accent); }
-
-        /* --- 列表與卡片樣式 --- */
-        .item { display: flex; align-items: flex-start; background: #fff; padding: 12px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 10px; gap: 12px; min-height: 80px; position: relative; flex-direction: column; }
-        .view-mode .item { border: none; border-bottom: 1px solid #f0f0f0; border-radius: 0; padding: 15px 0; margin-bottom: 0; }
-        .item-row { display: flex; width: 100%; align-items: center; gap: 12px; }
-        .handle { color: #ccc; cursor: grab; display: none; padding-right: 5px; font-size: 20px; }
-        .edit-mode .handle { display: block; }
-        .item-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-        .item-content b { font-size: 1.1em; }
         .thumb-container { width: 85px; height: 65px; border-radius: 8px; overflow: hidden; border: 1px solid #f0f0f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fafafa; }
         .thumb-img { width: 100%; height: 100%; object-fit: cover; }
         .btn-del { border: none; background: none; color: var(--danger); font-size: 1.5em; display: none; cursor: pointer; }
         .edit-mode .btn-del { display: block; }
-
-        /* --- 購物子項目 --- */
-        .sub-list { margin-top: 5px; width: 100%; padding-left: 15px; box-sizing: border-box; }
-        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px dashed #eee; }
-        .sub-item-name { font-size: 0.9em; color: #555; display: flex; align-items: center; }
-        .sub-item-name::before { content: "•"; color: var(--accent); margin-right: 8px; font-weight: bold; }
-        .map-link-btn { font-size: 0.75em; color: var(--accent); text-decoration: none; border: 1px solid #dff0ff; padding: 2px 6px; border-radius: 4px; background: #f0f8ff; }
-
-        /* --- 編輯區塊 --- */
-        .add-zone { display: none; margin-top: 15px; gap: 8px; width: 100%; }
-        .edit-mode .add-zone { display: flex; }
-        .add-zone input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .add-zone button { padding: 10px 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* 導航 */
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 1000; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
         .nav-item { font-size: 11px; color: #bdc3c7; text-align: center; flex: 1; cursor: pointer; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
@@ -100,10 +96,14 @@
 <div id="schedule-page" class="page"><div id="itinerary-container"></div></div>
 
 <div id="food-page" class="page">
-    <div class="card">
-        <div class="info-header">🍜 美食清單</div>
-        <div id="food-list"></div>
-        <div class="add-zone"><input type="text" id="food-input" placeholder="餐廳名稱..."><button onclick="addNew('food')">新增</button></div>
+    <div id="food-container"></div>
+    <div class="card" style="border: 2px dashed #ddd; background: transparent; box-shadow: none;">
+        <div class="info-header">➕ 新增美食</div>
+        <div class="add-zone" style="display: flex;">
+            <input type="text" id="food-input" placeholder="餐廳名稱...">
+            <input type="text" id="food-tag-input" placeholder="分類 (如: 甜點)..." style="flex: 0.5;">
+            <button onclick="addNew('food')">新增</button>
+        </div>
     </div>
 </div>
 
@@ -112,7 +112,7 @@
     <div class="card">
         <div class="info-header">🛒 購物清單</div>
         <div id="shop-list"></div>
-        <div class="add-zone"><input type="text" id="shop-input" placeholder="品牌名稱 (如 BIC CAMERA)..."><button onclick="addNew('shop')">新增</button></div>
+        <div class="add-zone"><input type="text" id="shop-input" placeholder="品牌名稱..."><button onclick="addNew('shop')">新增</button></div>
     </div>
 </div>
 
@@ -124,75 +124,151 @@
 </nav>
 
 <script>
-    const STORAGE_KEY = 'sapporo_v18_fullname';
+    const STORAGE_KEY = 'sapporo_v22_unified_ui';
     let isEditing = false;
 
     const initialData = {
         itinerary: {
             1:[{t: "北海道神宮", img: "https://www.settour.com.tw/ss_img/info/location/SPK/K0/SPK0000153/SPK0000153_40684.jpg"}],
             2:[
-				{t: "小樽運河", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0543/10543_4_l.jpg"},
-				{t: "小樽三角市場", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0111/10111_6_l.jpg"},
-				{t: "LeTAO 總店", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0018/10018_1_l.jpg"},
-				{t: "小樽北菓樓 總店", img: "https://ctrls5460.com/wp-content/uploads/2023/08/IMG_6758.jpg"},
-			], 
+                {t: "小樽運河", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0543/10543_4_l.jpg"},
+                {t: "小樽三角市場", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0111/10111_6_l.jpg"},
+                {t: "LeTAO 總店", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0018/10018_1_l.jpg"},
+                {t: "小樽北菓樓 總店", img: "https://ctrls5460.com/wp-content/uploads/2023/08/IMG_6758.jpg"},
+                {t: "小樽音樂盒堂 本館", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0110/10110_1_l.jpg"},
+                {t: "田中酒造 龜甲藏", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/1319/11319_1_l.jpg"},
+            ], 
             3:[
-				{t: "Lake Hill Farm", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0431/10431_1_l.jpg"}, 
-				{t: "洞爺湖八景", img: "https://pimg.1px.tw/olk610226/1708611161-3385359558-g.jpg"}, 
-				{t: "洞爺湖有珠山口纜車", img: "https://daydayplay.hk/wp-content/uploads/2020/03/%E6%B4%9E%E7%88%BA%E6%B9%96%E7%BA%9C%E8%BB%8A-2.jpg"}, 
-				{t: "支笏湖", img: "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_1280,h_853/w_79,x_14,y_14,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/lfleb8j58h5dpqshp3rd/%E6%94%AF%E7%AC%8F%E6%B9%96%C2%B7%E7%99%BB%E5%88%A5%E5%B0%BC%E5%85%8B%E6%96%AF%E6%B5%B7%E6%B4%8B%E5%85%AC%E5%9C%92%C2%B7%E6%B4%9E%E7%88%BA%E6%B9%96%E5%8D%83%E8%88%87%E5%8D%83%E5%B0%8B%E6%B9%96%E5%BA%95%E9%90%B5%E9%81%93%C2%B7%E5%B1%95%E6%9C%9B%E8%87%BA%C2%B7%E5%A4%A9%E7%8B%97%E5%B1%B1%C2%B7%E5%B0%8F%E6%A8%BD%C2%B7%E5%B7%96%E8%97%BB%E5%B1%B1%E5%A4%9C%E6%99%AF%E4%BA%8C%E6%97%A5%E9%81%8A%EF%BD%9C%E6%9C%AD%E5%B9%8C%E5%87%BA%E7%99%BC.jpg"}
-			], 
-			4:[
-				{t: "北海道大學", img: ""},
-				{t: "北海道廳紅磚廳舍（舊本廳舍）", img: ""},
-				{t: "札幌啤酒博物館", img: ""},
-			], 
-			5:[
-				{t: "新千歲機場", img: ""},
-			]
+                {t: "Lake Hill Farm", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0431/10431_1_l.jpg"}, 
+                {t: "洞爺湖八景", img: "https://pimg.1px.tw/olk610226/1708611161-3385359558-g.jpg"}, 
+                {t: "洞爺湖有珠山口纜車", img: "https://daydayplay.hk/wp-content/uploads/2020/03/%E6%B4%9E%E7%88%BA%E6%B9%96%E7%BA%9C%E8%BB%8A-2.jpg"}, 
+                {t: "支笏湖", img: "https://res.klook.com/images/fl_lossy.progressive,q_65/c_fill,w_1280,h_853/w_79,x_14,y_14,g_south_west,l_Klook_water_br_trans_yhcmh3/activities/lfleb8j58h5dpqshp3rd/%E6%94%AF%E7%AC%8F%E6%B9%96%C2%B7%E7%99%BB%E5%88%A5%E5%B0%BC%E5%85%8B%E6%96%AF%E6%B5%B7%E6%B4%8B%E5%85%AC%E5%9C%92%C2%B7%E6%B4%9E%E7%88%BA%E6%B9%96%E5%8D%83%E8%88%87%E5%8D%83%E5%B0%8B%E6%B9%96%E5%BA%95%E9%90%B5%E9%81%93%C2%B7%E5%B1%95%E6%9C%9B%E8%87%BA%C2%B7%E5%A4%A9%E7%8B%97%E5%B1%B1%C2%B7%E5%B0%8F%E6%A8%BD%C2%B7%E5%B7%96%E8%97%BB%E5%B1%B1%E5%A4%9C%E6%99%AF%E4%BA%8C%E6%97%A5%E9%81%8A%EF%BD%9C%E6%9C%AD%E5%B9%8C%E5%87%BA%E7%99%BC.jpg"}
+            ], 
+            4:[
+                {t: "北海道大學", img: "https://visit.sapporo.travel/tw/wp-content/uploads/sites/6/2022/09/spot_hokkaidouniversity-02-1600x1066.jpg"},
+                {t: "北海道廳紅磚廳舍（舊本廳舍）", img: "https://i0.wp.com/japanzerolag.com/wp-content/uploads/2025/10/sapporo-redbrick.jpg"},
+                {t: "札幌啤酒博物館", img: "https://visit.sapporo.travel/tw/wp-content/uploads/sites/6/2023/03/03beer-1.jpg"},
+                {t: "大通公園", img: "https://static.wixstatic.com/media/d8c572_bf1cec41cb3346b79c43a15a0655d9f2~mv2.jpg"},
+            ], 
+            5:[
+                {t: "新千歲機場", img: "https://svcstrg.cld.navitime.jp/travelguide/p01030019/p01030019_10t.jpg"}
+            ]
         },
         food: [
-			{t: "迴轉壽司 Toriton", img: ""}
-		],
+            {t: "迴轉壽司 Toriton", tag: "壽司", shops: ["迴轉壽司 Toriton 圓山店", "迴轉壽司 Toriton 豐平店", "迴轉壽司 Toriton Kita 8"]},
+            {t: "かつ徳", tag: "炸豬排", shops: ["かつ徳 伏見店", "かつ徳 平岸店"]},
+
+            {t: "若鶏時代 なると 本店", tag: "炸雞", shops: ["若鶏時代 なると 本店"]},
+
+            {t: "Medicineman", tag: "湯咖哩", shops: ["Medicineman"]},
+            {t: "湯咖喱 奥芝商店", tag: "湯咖哩", shops: [ "湯咖喱 奥芝商店 站前創成寺", "湯咖喱 奥芝商店 実家"]},
+            {t: "Soup Curry GARAKU Sapporo Main Restaurant", tag: "湯咖哩", shops: [ "Soup Curry GARAKU Sapporo Main Restaurant"]},
+
+            {t: "ねぎま 本店", tag: "居酒屋", shops: [ "ねぎま 本店"]},
+            {t: "魚としゃり 琴似店", tag: "居酒屋", shops: [ "魚としゃり 琴似店"]},
+            {t: "海さくら麻生店", tag: "居酒屋", shops: [ "海さくら麻生店"]},
+            {t: "焼鳥ぼうず", tag: "居酒屋", shops: [ "焼鳥ぼうず"]},
+            {t: "焼鳥谷やん", tag: "居酒屋", shops: [ "焼鳥谷やん"]},
+
+            {t: "天ぷら 梵", tag: "天婦羅", shops: [ "天ぷら 梵"]},
+
+            {t: "札幌拉麵 輝風 薄野店", tag: "拉麵", shops: [ "札幌拉麵 輝風 薄野店"]},
+            {t: "中華そば 色即是空", tag: "拉麵", shops: [ "中華そば 色即是空"]},
+            {t: "拉麵 札幌一粒庵", tag: "拉麵", shops: [ "拉麵 札幌一粒庵"]},
+            {t: "味噌拉麵 すみれ", tag: "拉麵", shops: [ "味噌拉麵 すみれ"]},
+            {t: "Sumire Nakanoshima Main Store", tag: "拉麵", shops: [ "Sumire Nakanoshima Main Store"]},
+
+            {t: "Sandria 本店", tag: "麵包/三明治", shops: ["Sandria 本店"]},
+            {t: "Over the moon", tag: "麵包/三明治", shops: ["Over the moon"]},
+            {t: "Lilac Bake", tag: "麵包/三明治", shops: ["Lilac Bake"]},
+            {t: "Donguri Odori", tag: "麵包/三明治", shops: ["Donguri Odori"]},
+            {t: "Marumugi Bakery", tag: "麵包/三明治", shops: ["Marumugi Bakery"]},
+            {t: "boulangerie coron Marui Imai Sapporo", tag: "麵包/三明治", shops: ["boulangerie coron Marui Imai Sapporo"]},
+
+            {t: "BARISTART COFFEE", tag: "咖啡", shops: ["BARISTART COFFEE"]},
+            {t: "MARUMI COFFEE STAND Sitatte Sapporo", tag: "咖啡", shops: ["MARUMI COFFEE STAND Sitatte Sapporo"]},
+
+            {t: "雪印冰淇淋 札幌本店", tag: "甜點", shops: ["雪印冰淇淋 札幌本店"]},
+            {t: "Cafe Noymond", tag: "甜點", shops: ["Cafe Noymond"]},
+            {t: "GELATERIA La Giostra", tag: "甜點", shops: ["GELATERIA La Giostra"]},
+            {t: "KINOTOYA BAKE Pole Town store", tag: "甜點", shops: ["KINOTOYA BAKE Pole Town store"]},
+            {t: "ROYCE' 巧克力世界", tag: "甜點", shops: ["ROYCE' 巧克力世界"]},
+
+        ],
         shop: [
             {t: "BIC CAMERA", shops: ["BIC CAMERA 札幌店", "BIC CAMERA 札幌狸小路店"]},
-            {t: "DONKI", shops: ["MEGA唐吉訶德札幌狸小路本店", "MEGA DONKI 狸小路別館", "唐吉訶德 薄野店", "SORA Donki新千歲機場店"]}
+            {t: "DONKI", shops: ["MEGA唐吉訶德札幌狸小路本店", "MEGA DONKI 狸小路別館", "唐吉訶德 薄野店", "SORA Donki新千歲機場店"]},
+            {t: "3COINS", shops: ["3COINS 札幌アピア店", "3COINS 札幌ポールタウン店", "3COINS OOOPS! 札幌オーロラタウン店"]},
+            {t: "無印良品", shops: ["無印良品 札幌ステラプレイス", "無印良品 札幌パルコ", "無印良品 アリオ札幌", "MUJIcom さっぽろ地下街オーロラタウン"]},
+            {t: "UNIQLO", shops: ["UNIQLO 札幌東急百貨店", "UNIQLO Ario札幌店", "UNIQLO 札幌三越店"]},
+            {t: "DAISO", shops: ["DAISO COCONOSUSUKINO Store", "Standard Products モユクサッポロ店", "ダイソー 札幌22スクエア店", "大創DAISO Ario札幌店"]},
         ],
-        coupon: [{t: "BIC CAMERA 10%+7%", img: "https://www.cathay-cube.com.tw/content/dam/cub-aem-cs/Image/Personal/overview/credit-card/%E5%9C%8B%E5%85%A7%E5%A4%96%E6%97%85%E9%81%8A/japan-coupon/%E5%9C%8B%E6%B3%B0%E4%B8%96%E8%8F%AF%E9%8A%80%E8%A1%8CBicCamera%E5%B0%88%E5%B1%AC%E5%84%AA%E6%83%A0%E5%88%B8.jpg"}]
+        coupon: [
+            {t: "BIC CAMERA 10%+7%", img: "https://www.cathay-cube.com.tw/content/dam/cub-aem-cs/Image/Personal/overview/credit-card/%E5%9C%8B%E5%85%A7%E5%A4%96%E6%97%85%E9%81%8A/japan-coupon/%E5%9C%8B%E6%B3%B0%E4%B8%96%E8%8F%AF%E9%8A%80%E8%A1%8CBicCamera%E5%B0%88%E5%B1%AC%E5%84%AA%E6%83%A0%E5%88%B8.jpg"}
+        ]
     };
 
-    let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialData;
+    //let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialData;
+    let tripData = initialData;
+
+    function stringToColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+        return `hsl(${Math.abs(hash) % 360}, 65%, 45%)`;
+    }
 
     function renderAll() {
-        // 渲染購物 (完整名稱)
+        // --- 美食分頁渲染 (統一卡片區塊設計) ---
+        const foodCont = document.getElementById('food-container');
+        foodCont.innerHTML = '';
+        const groups = {};
+        tripData.food.forEach((item, fIdx) => {
+            const tag = item.tag || '其他';
+            if (!groups[tag]) groups[tag] = [];
+            groups[tag].push({ item, fIdx });
+        });
+
+        Object.keys(groups).forEach(tagName => {
+            let groupHtml = `<div class="card">
+                <div class="info-header" style="color:${stringToColor(tagName)}">🍜 ${tagName}</div>
+                <div id="food-group-${tagName}">`;
+            
+            groups[tagName].forEach(({ item, fIdx }) => {
+                const tagHtml = `<span class="tag" style="background:${stringToColor(tagName)}">${tagName}</span>`;
+                const isSingleMatch = item.shops.length === 1 && item.shops[0] === item.t;
+                const subs = isSingleMatch ? '' : item.shops.map((s, sIdx) => `
+                    <div class="sub-item"><span class="sub-item-name">${s}</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}" target="_blank" class="map-link-btn">地圖</a>
+                        <button class="btn-del" onclick="removeSub('food', ${fIdx}, ${sIdx})">×</button>
+                    </div></div>`).join('');
+
+                const mapUrl = isSingleMatch ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.shops[0])}` : '#';
+                
+                groupHtml += `
+                    <div class="item">
+                        <div class="item-row">
+                            <span class="handle">☰</span>
+                            <div class="item-content"><b>${item.t}${tagHtml}</b>${isSingleMatch ? `<a href="${mapUrl}" target="_blank" style="font-size:0.85em; color:var(--accent); text-decoration:none;">🗺️ 地圖連結 ➔</a>` : ''}</div>
+                            <div class="thumb-container">🍜</div>
+                            <button class="btn-del" onclick="removeItem('food', ${fIdx})">×</button>
+                        </div>
+                        <div class="sub-list">${subs}</div>
+                        <div class="add-zone" style="margin-top:10px;"><input type="text" id="food-sub-in-${fIdx}" placeholder="新增分店..."><button onclick="addSub('food', ${fIdx})">＋</button></div>
+                    </div>`;
+            });
+
+            groupHtml += `</div></div>`;
+            foodCont.innerHTML += groupHtml;
+        });
+
+        // --- 其餘分頁 (嚴格保留) ---
         const shopCont = document.getElementById('shop-list');
         shopCont.innerHTML = '';
         tripData.shop.forEach((brand, bIdx) => {
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brand.t)}`;
-            const subs = brand.shops.map((s, sIdx) => `
-                <div class="sub-item">
-                    <span class="sub-item-name">${s}</span>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}" target="_blank" class="map-link-btn">地圖</a>
-                        <button class="btn-del" onclick="removeSubShop(${bIdx}, ${sIdx})">×</button>
-                    </div>
-                </div>`).join('');
-
-            shopCont.innerHTML += `
-                <div class="item">
-                    <div class="item-row">
-                        <span class="handle">☰</span>
-                        <div class="item-content"><b>${brand.t}</b><a href="${mapUrl}" target="_blank" style="font-size:0.85em; color:var(--accent); text-decoration:none;">🗺️ 地圖連結 ➔</a></div>
-                        <div class="thumb-container" onclick="window.open('${mapUrl}', '_blank')">🛒</div>
-                        <button class="btn-del" onclick="removeItem('shop', ${bIdx})">×</button>
-                    </div>
-                    <div class="sub-list">${subs}</div>
-                    <div class="add-zone" style="margin-top:10px;"><input type="text" id="sub-in-${bIdx}" placeholder="新增完整分店名稱..."><button onclick="addSubShop(${bIdx})">＋</button></div>
-                </div>`;
+            const subs = brand.shops.map((s, sIdx) => `<div class="sub-item"><span class="sub-item-name">${s}</span><div style="display:flex; align-items:center; gap:8px;"><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}" target="_blank" class="map-link-btn">地圖</a><button class="btn-del" onclick="removeSub('shop', ${bIdx}, ${sIdx})">×</button></div></div>`).join('');
+            shopCont.innerHTML += `<div class="item"><div class="item-row"><span class="handle">☰</span><div class="item-content"><b>${brand.t}</b></div><div class="thumb-container">🛒</div><button class="btn-del" onclick="removeItem('shop', ${bIdx})">×</button></div><div class="sub-list">${subs}</div><div class="add-zone" style="margin-top:10px;"><input type="text" id="shop-sub-in-${bIdx}" placeholder="新增分店..."><button onclick="addSub('shop', ${bIdx})">＋</button></div></div>`;
         });
-
-        // 渲染其他分頁
-        document.getElementById('food-list').innerHTML = tripData.food.map((it, i) => createItemUI(it, 'food', i)).join('');
         document.getElementById('coupon-list').innerHTML = tripData.coupon.map((it, i) => createItemUI(it, 'coupon', i)).join('');
         const itinCont = document.getElementById('itinerary-container');
         itinCont.innerHTML = '';
@@ -201,16 +277,7 @@
             itinCont.innerHTML += `<div class="card"><b>Day ${d}</b><div id="day-${d}">${items}</div><div class="add-zone"><input type="text" id="in-day-${d}" placeholder="景點名稱..."><button onclick="addNew('itinerary', ${d})">新增</button></div></div>`;
             if(isEditing) setupSortable(`day-${d}`, tripData.itinerary[d]);
         }
-        if(isEditing) { setupSortable('shop-list', tripData.shop); setupSortable('food-list', tripData.food); }
         save();
-    }
-
-    function setupSortable(id, arr) {
-        new Sortable(document.getElementById(id), { handle: '.handle', animation: 150, onEnd: (evt) => {
-            const moved = arr.splice(evt.oldIndex, 1)[0];
-            arr.splice(evt.newIndex, 0, moved);
-            save();
-        }});
     }
 
     function createItemUI(item, type, i, d = null) {
@@ -218,26 +285,28 @@
         const thumb = item.img ? `<div class="thumb-container" onclick="zoomImg('${item.img}')"><img src="${item.img}" class="thumb-img"></div>` : `<div class="thumb-container" onclick="window.open('${mapUrl}', '_blank')">📍</div>`;
         return `<div class="item"><div class="item-row"><span class="handle">☰</span><div class="item-content"><b>${item.t}</b><a href="${mapUrl}" target="_blank" style="font-size:0.85em; color:var(--accent); text-decoration:none;">🗺️ 地圖連結 ➔</a></div>${thumb}<button class="btn-del" onclick="removeItem('${type}', ${i}, ${d})">×</button></div></div>`;
     }
-
     function addNew(type, d = null) {
         const input = document.getElementById(d ? `in-day-${d}` : `${type}-input`);
         if(!input.value) return;
         if(type === 'itinerary') tripData.itinerary[d].push({t: input.value, img: ""});
-        else if(type === 'food') tripData.food.push({t: input.value, img: ""});
+        else if(type === 'food') {
+            const tagIn = document.getElementById('food-tag-input');
+            tripData.food.push({t: input.value, tag: tagIn.value || "其他", shops: [input.value]});
+            tagIn.value = '';
+        }
         else if(type === 'shop') tripData.shop.push({t: input.value, shops: []});
         input.value = ''; renderAll();
     }
-
-    function addSubShop(bIdx) {
-        const input = document.getElementById(`sub-in-${bIdx}`);
+    function addSub(type, idx) {
+        const input = document.getElementById(`${type}-sub-in-${idx}`);
         if(!input.value) return;
-        tripData.shop[bIdx].shops.push(input.value);
+        tripData[type][idx].shops.push(input.value);
         input.value = ''; renderAll();
     }
-
+    function removeSub(type, pIdx, sIdx) { tripData[type][pIdx].shops.splice(sIdx, 1); renderAll(); }
+    function setupSortable(id, arr) { new Sortable(document.getElementById(id), { handle: '.handle', animation: 150, onEnd: (evt) => { const moved = arr.splice(evt.oldIndex, 1)[0]; arr.splice(evt.newIndex, 0, moved); save(); }}); }
     function toggleMode() { isEditing = !isEditing; document.body.className = isEditing ? 'edit-mode' : 'view-mode'; document.getElementById('modeBtn').innerText = isEditing ? '✅ 完成' : '⚙️ 編輯模式'; renderAll(); }
     function removeItem(type, i, d) { if(type === 'itinerary') tripData.itinerary[d].splice(i, 1); else tripData[type].splice(i, 1); renderAll(); }
-    function removeSubShop(bIdx, sIdx) { tripData.shop[bIdx].shops.splice(sIdx, 1); renderAll(); }
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData)); }
     function zoomImg(src) { document.getElementById('overlay-img').src = src; document.getElementById('overlay').style.display = 'flex'; }
     function switchTab(tab, el) { document.querySelectorAll('.page').forEach(p => p.style.display = 'none'); document.getElementById(`${tab}-page`).style.display = 'block'; document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); window.scrollTo(0,0); }
