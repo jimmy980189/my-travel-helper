@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sapporo Helper - Full Name Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --bg: #f4f7f6; --card: #ffffff; --danger: #ff7675; --text-main: #2d3436; --text-sub: #636e72; }
+        body { font-family: -apple-system, "PingFang TC", sans-serif; background-color: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text-main); }
+        header { text-align: center; padding: 25px 20px; background: var(--primary); color: white; position: relative; }
+        .mode-switch { position: absolute; right: 15px; top: 22px; background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; cursor: pointer; }
+        .page { display: none; padding: 15px; }
+        .active-page { display: block; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .info-header { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        /* --- 資訊頁樣式 --- */
+        .flight-ticket { background: linear-gradient(135deg, #2980b9, #3498db); color: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; }
+        .flight-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .flight-city { font-size: 1.3em; font-weight: bold; }
+        .hotel-name { font-size: 1.15em; font-weight: 900; color: var(--primary); margin-bottom: 10px; line-height: 1.3; }
+        .station-box { background: #fff5f5; border-radius: 10px; padding: 12px; margin-top: 15px; border: 1px solid #ffe3e3; }
+        .station-item { font-size: 0.85em; color: #c0392b; line-height: 1.8; margin-bottom: 2px; }
+        .airport-box { background: #ebf5ff; border-radius: 10px; padding: 12px; margin-bottom: 10px; border-left: 4px solid var(--accent); }
+
+        /* --- 列表與卡片樣式 --- */
+        .item { display: flex; align-items: flex-start; background: #fff; padding: 12px; margin-bottom: 8px; border: 1px solid #eee; border-radius: 10px; gap: 12px; min-height: 80px; position: relative; flex-direction: column; }
+        .view-mode .item { border: none; border-bottom: 1px solid #f0f0f0; border-radius: 0; padding: 15px 0; margin-bottom: 0; }
+        .item-row { display: flex; width: 100%; align-items: center; gap: 12px; }
+        .handle { color: #ccc; cursor: grab; display: none; padding-right: 5px; font-size: 20px; }
+        .edit-mode .handle { display: block; }
+        .item-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .item-content b { font-size: 1.1em; }
+        .thumb-container { width: 85px; height: 65px; border-radius: 8px; overflow: hidden; border: 1px solid #f0f0f0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+        .thumb-img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-del { border: none; background: none; color: var(--danger); font-size: 1.5em; display: none; cursor: pointer; }
+        .edit-mode .btn-del { display: block; }
+
+        /* --- 購物子項目 --- */
+        .sub-list { margin-top: 5px; width: 100%; padding-left: 15px; box-sizing: border-box; }
+        .sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px dashed #eee; }
+        .sub-item-name { font-size: 0.9em; color: #555; display: flex; align-items: center; }
+        .sub-item-name::before { content: "•"; color: var(--accent); margin-right: 8px; font-weight: bold; }
+        .map-link-btn { font-size: 0.75em; color: var(--accent); text-decoration: none; border: 1px solid #dff0ff; padding: 2px 6px; border-radius: 4px; background: #f0f8ff; }
+
+        /* --- 編輯區塊 --- */
+        .add-zone { display: none; margin-top: 15px; gap: 8px; width: 100%; }
+        .edit-mode .add-zone { display: flex; }
+        .add-zone input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .add-zone button { padding: 10px 15px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* 導航 */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 12px 0; box-shadow: 0 -2px 15px rgba(0,0,0,0.1); z-index: 1000; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        .nav-item { font-size: 11px; color: #bdc3c7; text-align: center; flex: 1; cursor: pointer; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+        .fullscreen-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body class="view-mode">
+
+<header>
+    <h1 style="margin:0; font-size: 1.3em;">❄️ Sapporo Helper</h1>
+    <div id="modeBtn" class="mode-switch" onclick="toggleMode()">⚙️ 編輯模式</div>
+</header>
+
+<div id="overlay" class="fullscreen-overlay" onclick="this.style.display='none'"><img id="overlay-img" src="" style="max-width:90%"></div>
+
+<div id="info-page" class="page active-page">
+    <div class="card">
+        <div class="info-header"><span>✈️</span> 航班資訊</div>
+        <div class="flight-ticket">
+            <div class="flight-main"><div class="flight-city">TPE ➔ CTS</div><div style="font-size:0.85em;">3/21 (六)</div></div>
+            <div style="display:flex; justify-content:space-between;"><span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px; font-size:0.8em;">CI 130</span><span>08:35 - 13:15</span></div>
+        </div>
+        <div class="flight-ticket" style="background: #34495e; margin-bottom: 0;">
+            <div class="flight-main"><div class="flight-city">CTS ➔ TPE</div><div style="font-size:0.85em;">3/25 (三)</div></div>
+            <div style="display:flex; justify-content:space-between;"><span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:4px; font-size:0.8em;">CI 131</span><span>14:40 - 18:15</span></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="info-header"><span>🚆</span> 新千歲機場交通</div>
+        <div class="airport-box"><span style="font-weight:bold;">JR 快速 Airport (最快)</span><br><span style="font-size:0.85em;">車資 1,150円 | 約 37 分鐘抵達札幌站。<br>B1 乘車，每 12 分鐘一班.</span></div>
+        <div class="airport-box" style="background: #f0fff4; border-color: #55efc4;"><span style="font-weight:bold;">機場利木津巴士 (免爬樓梯)</span><br><span style="font-size:0.85em;">車資 1,300円 | 約 80 分鐘直達薄野/大通。<br>乘車處：84、14、22 號.</span></div>
+    </div>
+    <div class="card">
+        <div class="info-header"><span>🏨</span> 住宿資訊</div>
+        <div class="hotel-name">GRANBELL HOTEL TANUKI, SAPPORO</div>
+        <div style="font-size:0.9em; margin-bottom:5px;">📍 〒060-0063 北海道札幌市中央区南三条西8丁目10-1</div>
+        <div class="station-box">
+            <div style="font-size:0.85em; font-weight:bold; color:#e74c3c; margin-bottom:5px;">🏠 最近地鐵出口：</div>
+            <div class="station-item">• 南北線「<b>薄野站</b>」2號出口徒步8分鐘</div>
+            <div class="station-item">• 東西線「<b>西11丁目站</b>」3號出口徒步9分鐘</div>
+            <div class="station-item">• 東西線「<b>大通站</b>」1號出口徒步10分鐘</div>
+        </div>
+    </div>
+</div>
+
+<div id="schedule-page" class="page"><div id="itinerary-container"></div></div>
+
+<div id="food-page" class="page">
+    <div class="card">
+        <div class="info-header">🍜 美食清單</div>
+        <div id="food-list"></div>
+        <div class="add-zone"><input type="text" id="food-input" placeholder="餐廳名稱..."><button onclick="addNew('food')">新增</button></div>
+    </div>
+</div>
+
+<div id="shop-page" class="page">
+    <div class="card" style="background: #fff9db;"><div class="info-header" style="color: #e67e22;">🎟️ 優惠券</div><div id="coupon-list"></div></div>
+    <div class="card">
+        <div class="info-header">🛒 購物清單</div>
+        <div id="shop-list"></div>
+        <div class="add-zone"><input type="text" id="shop-input" placeholder="品牌名稱 (如 BIC CAMERA)..."><button onclick="addNew('shop')">新增</button></div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('info', this)"><span class="nav-icon">📋</span>資訊</div>
+    <div class="nav-item" onclick="switchTab('schedule', this)"><span class="nav-icon">📅</span>行程</div>
+    <div class="nav-item" onclick="switchTab('food', this)"><span class="nav-icon">🍜</span>美食</div>
+    <div class="nav-item" onclick="switchTab('shop', this)"><span class="nav-icon">🛒</span>購物</div>
+</nav>
+
+<script>
+    const STORAGE_KEY = 'sapporo_v18_fullname';
+    let isEditing = false;
+
+    const initialData = {
+        itinerary: {
+            1:[{t: "北海道神宮", img: "https://www.settour.com.tw/ss_img/info/location/SPK/K0/SPK0000153/SPK0000153_40684.jpg"}],
+            2:[
+				{t: "小樽運河", img: "https://www.visit-hokkaido.jp/lsc/upfile/spot/0001/0543/10543_4_l.jpg"},
+				{t: "小樽三角市場", img: ""},
+				{t: "LeTAO 總店", img: ""},
+				{t: "小樽北菓樓 總店", img: ""},
+			], 
+            3:[
+				{t: "Lake Hill Farm", img: ""}, 
+				{t: "洞爺湖八景", img: ""}, 
+				{t: "洞爺湖有珠山口纜車", img: ""}, 
+				{t: "支笏湖", img: ""}
+			], 
+			4:[
+				{t: "北海道大學", img: ""},
+				{t: "北海道廳紅磚廳舍（舊本廳舍）", img: ""},
+				{t: "札幌啤酒博物館", img: ""},
+			], 
+			5:[
+				{t: "新千歲機場", img: ""},
+			]
+        },
+        food: [
+			{t: "迴轉壽司 Toriton", img: ""}
+		],
+        shop: [
+            {t: "BIC CAMERA", shops: ["BIC CAMERA 札幌店", "BIC CAMERA 札幌狸小路店"]},
+            {t: "DONKI", shops: ["MEGA唐吉訶德札幌狸小路本店", "MEGA DONKI 狸小路別館", "唐吉訶德 薄野店", "SORA Donki新千歲機場店"]}
+        ],
+        coupon: [{t: "BIC CAMERA 10%+7%", img: "https://www.cathay-cube.com.tw/content/dam/cub-aem-cs/Image/Personal/overview/credit-card/%E5%9C%8B%E5%85%A7%E5%A4%96%E6%97%85%E9%81%8A/japan-coupon/%E5%9C%8B%E6%B3%B0%E4%B8%96%E8%8F%AF%E9%8A%80%E8%A1%8CBicCamera%E5%B0%88%E5%B1%AC%E5%84%AA%E6%83%A0%E5%88%B8.jpg"}]
+    };
+
+    let tripData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialData;
+
+    function renderAll() {
+        // 渲染購物 (完整名稱)
+        const shopCont = document.getElementById('shop-list');
+        shopCont.innerHTML = '';
+        tripData.shop.forEach((brand, bIdx) => {
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brand.t)}`;
+            const subs = brand.shops.map((s, sIdx) => `
+                <div class="sub-item">
+                    <span class="sub-item-name">${s}</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s)}" target="_blank" class="map-link-btn">地圖</a>
+                        <button class="btn-del" onclick="removeSubShop(${bIdx}, ${sIdx})">×</button>
+                    </div>
+                </div>`).join('');
+
+            shopCont.innerHTML += `
+                <div class="item">
+                    <div class="item-row">
+                        <span class="handle">☰</span>
+                        <div class="item-content"><b>${brand.t}</b><a href="${mapUrl}" target="_blank" style="font-size:0.85em; color:var(--accent); text-decoration:none;">🗺️ 地圖連結 ➔</a></div>
+                        <div class="thumb-container" onclick="window.open('${mapUrl}', '_blank')">🛒</div>
+                        <button class="btn-del" onclick="removeItem('shop', ${bIdx})">×</button>
+                    </div>
+                    <div class="sub-list">${subs}</div>
+                    <div class="add-zone" style="margin-top:10px;"><input type="text" id="sub-in-${bIdx}" placeholder="新增完整分店名稱..."><button onclick="addSubShop(${bIdx})">＋</button></div>
+                </div>`;
+        });
+
+        // 渲染其他分頁
+        document.getElementById('food-list').innerHTML = tripData.food.map((it, i) => createItemUI(it, 'food', i)).join('');
+        document.getElementById('coupon-list').innerHTML = tripData.coupon.map((it, i) => createItemUI(it, 'coupon', i)).join('');
+        const itinCont = document.getElementById('itinerary-container');
+        itinCont.innerHTML = '';
+        for(let d=1; d<=5; d++) {
+            let items = (tripData.itinerary[d] || []).map((it, i) => createItemUI(it, 'itinerary', i, d)).join('');
+            itinCont.innerHTML += `<div class="card"><b>Day ${d}</b><div id="day-${d}">${items}</div><div class="add-zone"><input type="text" id="in-day-${d}" placeholder="景點名稱..."><button onclick="addNew('itinerary', ${d})">新增</button></div></div>`;
+            if(isEditing) setupSortable(`day-${d}`, tripData.itinerary[d]);
+        }
+        if(isEditing) { setupSortable('shop-list', tripData.shop); setupSortable('food-list', tripData.food); }
+        save();
+    }
+
+    function setupSortable(id, arr) {
+        new Sortable(document.getElementById(id), { handle: '.handle', animation: 150, onEnd: (evt) => {
+            const moved = arr.splice(evt.oldIndex, 1)[0];
+            arr.splice(evt.newIndex, 0, moved);
+            save();
+        }});
+    }
+
+    function createItemUI(item, type, i, d = null) {
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.t)}`;
+        const thumb = item.img ? `<div class="thumb-container" onclick="zoomImg('${item.img}')"><img src="${item.img}" class="thumb-img"></div>` : `<div class="thumb-container" onclick="window.open('${mapUrl}', '_blank')">📍</div>`;
+        return `<div class="item"><div class="item-row"><span class="handle">☰</span><div class="item-content"><b>${item.t}</b><a href="${mapUrl}" target="_blank" style="font-size:0.85em; color:var(--accent); text-decoration:none;">🗺️ 地圖連結 ➔</a></div>${thumb}<button class="btn-del" onclick="removeItem('${type}', ${i}, ${d})">×</button></div></div>`;
+    }
+
+    function addNew(type, d = null) {
+        const input = document.getElementById(d ? `in-day-${d}` : `${type}-input`);
+        if(!input.value) return;
+        if(type === 'itinerary') tripData.itinerary[d].push({t: input.value, img: ""});
+        else if(type === 'food') tripData.food.push({t: input.value, img: ""});
+        else if(type === 'shop') tripData.shop.push({t: input.value, shops: []});
+        input.value = ''; renderAll();
+    }
+
+    function addSubShop(bIdx) {
+        const input = document.getElementById(`sub-in-${bIdx}`);
+        if(!input.value) return;
+        tripData.shop[bIdx].shops.push(input.value);
+        input.value = ''; renderAll();
+    }
+
+    function toggleMode() { isEditing = !isEditing; document.body.className = isEditing ? 'edit-mode' : 'view-mode'; document.getElementById('modeBtn').innerText = isEditing ? '✅ 完成' : '⚙️ 編輯模式'; renderAll(); }
+    function removeItem(type, i, d) { if(type === 'itinerary') tripData.itinerary[d].splice(i, 1); else tripData[type].splice(i, 1); renderAll(); }
+    function removeSubShop(bIdx, sIdx) { tripData.shop[bIdx].shops.splice(sIdx, 1); renderAll(); }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData)); }
+    function zoomImg(src) { document.getElementById('overlay-img').src = src; document.getElementById('overlay').style.display = 'flex'; }
+    function switchTab(tab, el) { document.querySelectorAll('.page').forEach(p => p.style.display = 'none'); document.getElementById(`${tab}-page`).style.display = 'block'; document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); window.scrollTo(0,0); }
+    renderAll();
+</script>
+</body>
+</html>
